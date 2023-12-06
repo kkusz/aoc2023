@@ -21,7 +21,9 @@
 
          01 WS-POINTER          USAGE POINTER.
 
-         77 IX                  PIC 999.
+         77 IX                  PIC 99.
+         77 IX2                 PIC 9(10).
+         77 IX3                 PIC 99.
 
          01 WS-PARSED-STATE     PIC 99 VALUE  0.
             88 PARSED-INIT             VALUE  0.
@@ -48,26 +50,43 @@
 
          01 WS-MAP-POINTER      USAGE POINTER.
 
-         01 WS-SEED2SOIL-BUF    PIC X(3000).
-         01 WS-SEED2SOIL-LEN    PIC 9(3) VALUE 0.
+         01 WS-BUFFERS.
+           05 WS-SEED2SOIL-BUF    PIC X(3000).
+           05 WS-SEED2SOIL-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-SOIL2FERT-BUF    PIC X(3000).
-         01 WS-SOIL2FERT-LEN    PIC 9(3) VALUE 0.
+           05 WS-SOIL2FERT-BUF    PIC X(3000).
+           05 WS-SOIL2FERT-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-FERT2WATR-BUF    PIC X(3000).
-         01 WS-FERT2WATR-LEN    PIC 9(3) VALUE 0.
+           05 WS-FERT2WATR-BUF    PIC X(3000).
+           05 WS-FERT2WATR-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-WATR2LIGH-BUF    PIC X(3000).
-         01 WS-WATR2LIGH-LEN    PIC 9(3) VALUE 0.
+           05 WS-WATR2LIGH-BUF    PIC X(3000).
+           05 WS-WATR2LIGH-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-LIGH2TEMP-BUF    PIC X(3000).
-         01 WS-LIGH2TEMP-LEN    PIC 9(3) VALUE 0.
+           05 WS-LIGH2TEMP-BUF    PIC X(3000).
+           05 WS-LIGH2TEMP-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-TEMP2HUMD-BUF    PIC X(3000).
-         01 WS-TEMP2HUMD-LEN    PIC 9(3) VALUE 0.
+           05 WS-TEMP2HUMD-BUF    PIC X(3000).
+           05 WS-TEMP2HUMD-LEN    PIC 9(3) VALUE 0.
 
-         01 WS-HUMD2LOCA-BUF    PIC X(3000).
-         01 WS-HUMD2LOCA-LEN    PIC 9(3) VALUE 0.
+           05 WS-HUMD2LOCA-BUF    PIC X(3000).
+           05 WS-HUMD2LOCA-LEN    PIC 9(3) VALUE 0.
+
+         01 WS-BUFFERS-TAB REDEFINES WS-BUFFERS.
+           05 WS-MAP-ITEM          OCCURS 7.
+              10 WS-MAP-ENTRY      OCCURS 100.
+                 15 WS-ENTRY-DEST  PIC 9(10).
+                 15 WS-ENTRY-SRC   PIC 9(10).
+                 15 WS-ENTRY-RANGE PIC 9(10).
+              10 WS-MAP-LEN        PIC 999.
+
+         01 WS-SOURCE              PIC 9(10).
+         01 WS-DESTINATION         PIC 9(10).
+
+         01 WS-RANGE1              PIC 9(10).
+         01 WS-RANGE2              PIC 9(10).
+
+         01 WS-LOWEST-LOCA         PIC 9(10) VALUE 9999999999.
 
          LINKAGE SECTION. 
 
@@ -97,7 +116,6 @@
                   WHEN PARSED-SEEDS
                      SET PARSED-SPACE1 TO TRUE
                   WHEN PARSED-SPACE1
-                     DISPLAY 'SEED TO SOIL'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-SEED2SOIL-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -110,7 +128,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-SEED2SOIL 
-                     DISPLAY 'SOIL TO FERTILIZER'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-SOIL2FERT-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -123,7 +140,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-SOIL2FERT
-                     DISPLAY 'FERTILIZER TO WATER'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-FERT2WATR-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -136,7 +152,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-FERT2WATR
-                     DISPLAY 'WATER TO LIGHT'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-WATR2LIGH-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -149,7 +164,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-WATR2LIGH
-                     DISPLAY 'LIGHT TO TEMPERATURE'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-LIGH2TEMP-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -162,7 +176,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-LIGH2TEMP
-                     DISPLAY 'TEMPERATURE TO HUMIDITY'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-TEMP2HUMD-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -175,7 +188,6 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN PARSED-TEMP2HUMD
-                     DISPLAY 'HUMIDITY TO LOCATION'
                      SET ADDRESS OF LN-MAP 
                       TO ADDRESS OF WS-HUMD2LOCA-BUF
                      SET ADDRESS OF LN-MAP-LEN 
@@ -188,7 +200,7 @@
                         PERFORM PARSE-MAP
                      END-IF
                   WHEN OTHER
-                     PERFORM PARSE-RECORD
+                     CONTINUE
                END-EVALUATE
 
                READ INPUT-FILE
@@ -198,10 +210,20 @@
 
             CLOSE INPUT-FILE
 
+            PERFORM VARYING IX3 FROM 1 BY 1 UNTIL WS-SEED(IX3) = 0
+               MOVE WS-SEED(IX3) TO WS-SOURCE
+               PERFORM TRAVERSE-MAP 
+               IF WS-DESTINATION < WS-LOWEST-LOCA 
+                  MOVE WS-DESTINATION TO WS-LOWEST-LOCA
+               END-IF
+            END-PERFORM
+
+            DISPLAY WS-LOWEST-LOCA
+
             STOP RUN.
 
          PARSE-SEEDS SECTION.
-            UNSTRING INPUT-TEXT(8:33)
+            UNSTRING INPUT-TEXT(8:210)
                DELIMITED BY ' '
                INTO WS-SEED(1)
                    ,WS-SEED(2)
@@ -224,14 +246,7 @@
                    ,WS-SEED(19)
                    ,WS-SEED(20)
             END-UNSTRING
-            DISPLAY WS-SEED(1) ' ' 
-                    WS-SEED(2) ' '
-                    WS-SEED(3) ' '
-                    WS-SEED(4)
             SET PARSED-SEEDS TO TRUE
-            .
-         PARSE-RECORD SECTION.
-            DISPLAY WS-LINKED(1:50)
             .
 
          PARSE-MAP SECTION.
@@ -242,9 +257,27 @@
                    ,LN-SRC  (LN-MAP-LEN)
                    ,LN-RANGE(LN-MAP-LEN)
             END-UNSTRING
+            .
 
-            DISPLAY LN-MAP-LEN ' : '
-                    LN-DEST (LN-MAP-LEN) ' , '
-                   ,LN-SRC  (LN-MAP-LEN) ' , '
-                   ,LN-RANGE(LN-MAP-LEN) ' , '
+         TRAVERSE-MAP SECTION.
+              MOVE 1 TO IX
+              MOVE WS-SOURCE TO WS-DESTINATION
+
+              PERFORM VARYING IX FROM 1 BY 1 UNTIL IX > 7
+              PERFORM VARYING IX2 FROM 1 BY 1
+                 UNTIL IX2 > WS-MAP-LEN(IX)
+                 MOVE WS-ENTRY-SRC(IX IX2) TO WS-RANGE1
+                                              WS-RANGE2
+                 COMPUTE WS-RANGE2 = WS-RANGE2
+                                   + WS-ENTRY-RANGE(IX IX2)
+                                   - 1
+                 IF  WS-SOURCE >= WS-RANGE1
+                 AND WS-SOURCE <= WS-RANGE2
+                   COMPUTE WS-DESTINATION = WS-SOURCE 
+                                          + WS-ENTRY-DEST(IX IX2)
+                                          - WS-ENTRY-SRC (IX IX2)
+                 END-IF
+              END-PERFORM
+              MOVE WS-DESTINATION TO WS-SOURCE
+              END-PERFORM
             .
